@@ -1,2 +1,3 @@
-#Projekt w Języku Skryptowym
+# Projekt w Języku Skryptowym
+
 Michał Nowakowski 2023
