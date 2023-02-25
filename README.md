@@ -13,6 +13,6 @@ To use the program, run file:&emsp;<b>file_manager.py</b>
 - [ ] (31.03.23) Creating basic functionality.
 - [ ] (31.04.23) Adding more functions, and make GUI prettier.
 - [ ] (31.05.23) Creating usefull shortcuts for functions.
-- [ ] Ready to use! :tada:
+- [ ] Ready to use! &ensp;:tada:
 
 @Michał Nowakowski - 2023
