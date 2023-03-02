@@ -4,9 +4,9 @@
 
 To use the program, run file:&emsp;<b>file_manager.py</b>
 
-> for ex. using&ensp;`sudo python3 file_manager.py`
+> for ex. using&ensp;`python3 file_manager.py`
 
-&emsp;&ensp;<sub>*Sudo is important, because of Keyboard python library usage.</sub>
+&emsp;&ensp;<sub>*Sudo is not important.</sub>
 
 ## Goals
 
