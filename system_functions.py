@@ -31,5 +31,8 @@ def list_items():
         items_dict.update({item_index:item_to_add})
 
         item_index += 1
-    
+
+    if ((len(items_dict)) == 2) and (("No" or "no") in ((os.popen('file *').readlines())[0])):
+        items_dict = {1:"° Go back", 2:"Empty directory."}
+
     return items_dict
