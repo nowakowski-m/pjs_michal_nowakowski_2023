@@ -1,88 +1,48 @@
 import system_functions as sf
+import run_functions as rf
 import curses
-import os
 
 def main(stdscr):
-    highlighted_item = 1
-
-    curses.curs_set(0)
-
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLUE)
-    curses.init_pair(2, curses.COLOR_BLACK, curses.COLOR_RED)
-    stdscr.bkgd(curses.color_pair(1))
-
     height, width = stdscr.getmaxyx()
-
+    highlighted_item = 1
+    max_highlight = len(sf.list_items())
+    pos = 0
     title = "LAHIM"
-    stdscr.box()
-    stdscr.addstr(0, max(0, (width - len(title)) // 2), f' {title} ')
-
-    x = max(0, 20)
-    y = max(0, (height - 1) // 2)
-    
-    for item_index in sf.list_items():
-        if item_index == highlighted_item:
-            stdscr.addstr(y, x, sf.list_items()[item_index], curses.color_pair(2))
-        else:
-            stdscr.addstr(y, x, sf.list_items()[item_index])
-        y += 1
-
-    stdscr.refresh()
+    curses.KEY_ENTER = 10
+    rf.window_config(stdscr)
+    rf.add_box(stdscr, title, width)
+    for items in rf.render_new_dir(height, width, highlighted_item):
+        stdscr.addstr(*items)
 
     while True:
 
         key = stdscr.getch()
-        if key == curses.KEY_DOWN:
-            highlighted_item += 1
-            x = max(0, 20)
-            y = max(0, (height - 1) // 2)
+        curses.napms(30)
 
-            for item_index in sf.list_items():
-                if item_index == highlighted_item:
-                    stdscr.addstr(y - 1, x, sf.list_items()[int(item_index) - 1])
-                    stdscr.addstr(y, x, sf.list_items()[item_index], curses.color_pair(2))
-                y += 1
+        if key == curses.KEY_DOWN and (highlighted_item < max_highlight):
+            pos = 1
+            for items in rf.update_curr_dir(pos, highlighted_item, height, width):
+                stdscr.addstr(*items)
+            highlighted_item += pos
 
-        elif key == curses.KEY_UP:
-            highlighted_item -= 1
-            x = max(0, 20)
-            y = max(0, (height - 1) // 2)
+        elif key == curses.KEY_UP and (highlighted_item > 1):
+            pos = (-1)
+            for items in rf.update_curr_dir(pos, highlighted_item, height, width):
+                stdscr.addstr(*items)            
+            highlighted_item += pos
 
-            for item_index in sf.list_items():
-                if item_index == highlighted_item:
-                    stdscr.addstr(y, x, sf.list_items()[item_index], curses.color_pair(2))
-                    stdscr.addstr(y + 1, x, sf.list_items()[int(item_index) + 1])
-                y += 1
-
-        elif key == 10 and ("°" in (sf.list_items()[highlighted_item]) or "𝔻" in (sf.list_items()[highlighted_item])):
-
-            if "°" in (sf.list_items()[highlighted_item]):
-                os.chdir("..")
-
-            else:                
-                path = (sf.list_items()[highlighted_item])[3::]
-                os.chdir(path)
-
-            highlighted_item = 1
-            x = max(0, 20)
-            y = max(0, (height - 1) // 2)
-
-            stdscr.clear()
-
-            for item_index in sf.list_items():
-                if item_index == highlighted_item:
-                    stdscr.addstr(y, x, sf.list_items()[item_index], curses.color_pair(2))
-                else:
-                    stdscr.addstr(y, x, sf.list_items()[item_index])
-                y += 1
-
-            stdscr.box()
-            stdscr.addstr(0, max(0, (width - len(title)) // 2), f' {title} ')
-
-            stdscr.refresh()
+        elif key == curses.KEY_ENTER:
+            if '𝔻' in sf.list_items()[highlighted_item] or '°' in sf.list_items()[highlighted_item]:
+                rf.change_dir(highlighted_item)
+                stdscr.clear()
+                rf.add_box(stdscr, title, width)
+                highlighted_item = 1
+                max_highlight = len(sf.list_items())
+                for items in rf.render_new_dir(height, width, highlighted_item):
+                    stdscr.addstr(*items)
+                stdscr.refresh()
 
         highlighted_item = max(1, min(len(sf.list_items()), highlighted_item))
-        curses.napms(30)
 
 if __name__ == '__main__':
     curses.wrapper(main)

@@ -1,0 +1,2 @@
+1. Need to ask for sudo while tring to open dir/file with no permissions.
+2. Highlight is missing while pressing enter on file.
