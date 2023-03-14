@@ -1,48 +1,29 @@
-import system_functions as sf
-import run_functions as rf
-import curses
+# https://github.com/nowakowski-m/pjs_michal_nowakowski_2023
+# This is main file, execute it to run app.
 
-def main(stdscr):
-    height, width = stdscr.getmaxyx()
-    highlighted_item = 1
-    max_highlight = len(sf.list_items())
-    pos = 0
-    title = "LAHIM"
-    curses.KEY_ENTER = 10
-    rf.window_config(stdscr)
-    rf.add_box(stdscr, title, width)
-    for items in rf.render_new_dir(height, width, highlighted_item):
-        stdscr.addstr(*items)
+import system_functions as sf #temporary app module with whole functionality
+import curses #tool used for user interface
 
-    while True:
+### Some global variables needed ###
+highlighted_item = 0
+margin = 4
+path = ""
+####################################
 
-        key = stdscr.getch()
-        curses.napms(30)
+stdscr = curses.initscr()
+height, width = stdscr.getmaxyx()
+menu_shadow = curses.newwin((height - (2 * margin) - 1), (width - (4 * margin)) - 2, (margin + 1), ((2 * margin) + 2))
+menu = curses.newwin((height - (2 * margin) - 1), (width - (4 * margin) - 2), margin, (2 * margin))
 
-        if key == curses.KEY_DOWN and (highlighted_item < max_highlight):
-            pos = 1
-            for items in rf.update_curr_dir(pos, highlighted_item, height, width):
-                stdscr.addstr(*items)
-            highlighted_item += pos
+sf.start_things(stdscr, menu_shadow, menu)
 
-        elif key == curses.KEY_UP and (highlighted_item > 1):
-            pos = (-1)
-            for items in rf.update_curr_dir(pos, highlighted_item, height, width):
-                stdscr.addstr(*items)            
-            highlighted_item += pos
+while True:
+    
+    menu.addstr(((menu.getmaxyx()[0]) - 2), 2, "ESC - Exit", curses.color_pair(4)) #just testing sth
+    path = sf.render_things(menu, highlighted_item)
+    key = menu.getch()
+    highlighted_item += (sf.sterring(key, path, highlighted_item) if key else 0)
 
-        elif key == curses.KEY_ENTER:
-            if '𝔻' in sf.list_items()[highlighted_item] or '°' in sf.list_items()[highlighted_item]:
-                rf.change_dir(highlighted_item)
-                stdscr.clear()
-                rf.add_box(stdscr, title, width)
-                highlighted_item = 1
-                max_highlight = len(sf.list_items())
-                for items in rf.render_new_dir(height, width, highlighted_item):
-                    stdscr.addstr(*items)
-                stdscr.refresh()
-
-        highlighted_item = max(1, min(len(sf.list_items()), highlighted_item))
-
-if __name__ == '__main__':
-    curses.wrapper(main)
+    if key == 27:
+        sf.close_functions(menu)
+        break

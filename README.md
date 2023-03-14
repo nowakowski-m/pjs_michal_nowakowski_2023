@@ -6,7 +6,7 @@ To use the program, run file:&emsp;<b>file_manager.py</b>
 
 > for ex. using&ensp;`python3 file_manager.py`
 
-&emsp;&ensp;<sub>*Sudo is not important.</sub>
+&emsp;&ensp;<sub>*Sudo is not important, but needed if want to manage files or dirs that need sudo permissions.</sub>
 
 ## Goals
 
