@@ -48,19 +48,32 @@ def close_functions(menu): #functions needed to be executed to close app propert
     curses.raw()
     os.system("reset")
 
+def change_dir(path, highlighted_item):
+    try:
+        os.chdir(path)
+        return (0 - highlighted_item)
+    except PermissionError:
+        #can add kind of warning shown at screen to inform user of no access
+        return 0
+
 def sterring(key, path, highlighted_item) -> int: #allows to control app using keyboard
     
     match key:
         case curses.KEY_UP:
-            pos = (-1)
+            if highlighted_item > 0:
+                pos = (-1)
+            else:
+                pos = 0
         case curses.KEY_DOWN:
-            pos = 1
+            if highlighted_item < (len(list_items()) - 1):
+                pos = 1
+            else:
+                pos = 0
         case 10: #10 is ASCII Code of Enter key
             if "𝔽" in path:
                 pos = 0
             else:
-                os.chdir(path)
-                pos = (0 - highlighted_item)
+                pos = change_dir(path, highlighted_item)
         case _:
             pos = 0
 

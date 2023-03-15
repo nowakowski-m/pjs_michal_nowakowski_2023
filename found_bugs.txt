@@ -1,11 +1,5 @@
-1. Need to give warning while opening dir/file with no permissions.
-    #try-except probably will be used to solve this.
-
-2. No menu position limitation.
-    #easy to do, just didn't need to earlier.
-
-3. If list of files is too long, app crashes.
+1. If list of files is too long, app crashes.
     #need to add some kind of scroll-bar, but it will take a moment.
     
-4. No curses windows scalling after terminal-size change.
+2. No curses windows scalling after terminal-size change.
     #gonna create function checking if size was changed or not.
