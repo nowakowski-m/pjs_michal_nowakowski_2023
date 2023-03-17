@@ -1,0 +1,13 @@
+# User's settings - can change them there, or will be
+# automatically saved when changed in app properties.
+user_settings: {
+  'show_hidden_files': False,
+  'useless_things': 'test'
+}
+
+# Global variables needed for app properly working.
+# Don't change them if you don't understand a code!
+global_variables: {
+  'highlighted_item': 0,
+  'path': ""
+}

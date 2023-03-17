@@ -1,5 +1,5 @@
 1. If list of files is too long, app crashes.
     #need to add some kind of scroll-bar, but it will take a moment.
     
-2. No curses windows scalling after terminal-size change.
-    #gonna create function checking if size was changed or not.
+2. Terminal-size change provides resizing curses windows, but sometimes
+    lagging and don't work really propertly. Maybe it will work better later.
