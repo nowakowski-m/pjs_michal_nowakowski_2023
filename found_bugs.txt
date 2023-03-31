@@ -12,3 +12,5 @@
 5. Need to add preview for files
 
 6. Permission error on screen dont work.
+
+7. Add how many cats are higher.
