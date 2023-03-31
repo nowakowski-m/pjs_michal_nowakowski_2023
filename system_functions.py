@@ -79,13 +79,15 @@ def list_items(show_hidden_items, items_pages, max_list_len) -> list: #checking 
         case False:
             list_to_get = [f for f in os.listdir() if not f.startswith('.')]
 
-    items_list = [] if (len(list_to_get) + items_pages) > max_list_len else [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back.']
+    higher_dirs = (len(os.getcwd().split("/"))) - 1
+
+    items_list = [] if (len(list_to_get) + items_pages) > max_list_len else [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})']
 
     items_list.extend(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}' for name in list_to_get)
     
     if (len(list_to_get) + items_pages) > max_list_len:
         for x in range(0, (len(list_to_get) + items_pages), (max_list_len + 1)):
-            items_list.insert(x, (f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back.'))
+            items_list.insert(x, (f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})'))
             
     return items_list
 
