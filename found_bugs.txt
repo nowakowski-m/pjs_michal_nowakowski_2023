@@ -1,14 +1,14 @@
 1. Need to add auto-change of max_list_len while chaning screen size.
     
 2. Terminal-size change provides resizing curses windows, but sometimes
-    lagging and don't work really propertly. Maybe it will work better later.
+   lagging and don't work really propertly. Maybe it will work better later.
 
 3. Need to add settings save.
 
 4. Sometimes name of file or dir is too long, need to format it somehow.
-    #for ex. max_name_len = width - 2 * margin
-    #name = f'{name[::(max_name_len - 3)]}...' if len(name) > max_name_len else f'{name}'
-    
-5. Need to add something like Page: 1/1 or Page: 3/5.
+   #for ex. max_name_len = width - 2 * margin
+   #name = f'{name[::(max_name_len - 3)]}...' if len(name) > max_name_len else f'{name}'
 
-6. There is no highlighted_item limits when there is more than 1 page.
+5. Need to add preview for files
+
+6. Permission error on screen dont work.

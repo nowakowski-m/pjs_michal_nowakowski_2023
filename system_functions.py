@@ -32,11 +32,11 @@ def start_things(stdscr, menu_shadow, menu): #just inits needed things for curse
     menu.keypad(True)
     menu.refresh()
 
-def screen_elements(stdscr): #initializing new windows and returns it
+def screen_elements(): #initializing new windows and returns it
     margin, height, width, lines, cols = get_sizes()
     menu_shadow = curses.newwin(lines, cols, (margin + 1), ((2 * margin) + 2))
     menu = curses.newwin(lines, cols, margin, (2 * margin))
-    max_list_len = int(height) - (3 * margin) - 1
+    max_list_len = int(height) - (3 * margin) - 2
 
     return menu_shadow, menu, max_list_len
 
@@ -71,46 +71,40 @@ def change_size(stdscr, menu_shadow, menu): #resizing windows, when terminal siz
 
 ##### FILES SUPPORT #####
 
-def list_items(show_hidden_items, max_list_len) -> list: #checking for items in current dir and prepares list for app needs
+def list_items(show_hidden_items, items_pages, max_list_len) -> list: #checking for items in current dir and prepares list for app needs
 
-    items_list = [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back.']
     match show_hidden_items:
         case True:
             list_to_get = [f for f in os.listdir()]
         case False:
             list_to_get = [f for f in os.listdir() if not f.startswith('.')]
 
-    if (len(list_to_get) + 1) > max_list_len:
-        for name in list_to_get:
-            
-            items_list.append(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}')
-            
-            if len(items_list) % max_list_len == 0:
-                items_list.append(f'° Go back.')
+    items_list = [] if (len(list_to_get) + items_pages) > max_list_len else [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back.']
 
-    else:
-        items_list.extend(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}' for name in list_to_get)
+    items_list.extend(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}' for name in list_to_get)
+    
+    if (len(list_to_get) + items_pages) > max_list_len:
+        for x in range(0, (len(list_to_get) + items_pages), (max_list_len + 1)):
+            items_list.insert(x, (f'°No higher dirs.' if os.getcwd() == "/" else f'° Go back.'))
             
     return items_list
 
-def change_dir(path, highlighted_item) -> int: #function changing directory and returning position
+def change_dir(menu, path, highlighted_item) -> int: #function changing directory and returning position
     try:
         os.chdir(path)
         return (0 - highlighted_item)
     except PermissionError:
+        menu.addstr((menu.getmaxyx()[0] - 2), 2, f'Permission error.', curses.color_pair(4)) #just testing sth
         #can add kind of warning shown at screen to inform user of no access
         return 0
 
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page) -> str: #rendering current app status on screen
+def render_things(menu, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
     menu.clear()
 
-    first_index = max_list_len * (current_page - 1)
-    last_index = first_index + max_list_len - 1
-
-    for index, item in enumerate(list_items(show_hidden_items, max_list_len)):
+    for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
         if index == highlighted_item:
             curr_color = curses.color_pair(255)
 
@@ -124,23 +118,24 @@ def render_things(menu, show_hidden_items, highlighted_item, max_list_len, items
         else:
             curr_color = curses.color_pair(254)
 
-        y_pos = index - (max_list_len * (current_page - 1))
+        y_pos = index - ((max_list_len + 1) * (current_page - 1))
 
-        if index == first_index and (index < last_index and index >= first_index):
+        if index == first_index and (index <= last_index and index >= first_index - 0):
             menu.addstr((y_pos + 1), 3, item, curr_color)
 
-        elif index != first_index and (index < last_index and index >= first_index):
+        elif index != first_index and (index <= last_index and index >= first_index + 0):
             menu.addstr((y_pos + 1), 5, item, curr_color)
 
     # test strings 
-    # menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"Max_list_len: {max_list_len}", curses.color_pair(4)) #just testing sth
-    # menu.addstr(((menu.getmaxyx()[0]) - 1), 2, f"Current page: {current_page}", curses.color_pair(4)) #just testing sth
-    # menu.addstr(((menu.getmaxyx()[0]) - 3), 2, f"path: {path}", curses.color_pair(4)) #just testing sth
+    pages_string = f"Page: {current_page}/{items_pages}"
+    menu.addstr((menu.getmaxyx()[0] - 2), (menu.getmaxyx()[1] - len(pages_string) - 2), pages_string, curses.color_pair(4)) #just testing sth
+    menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"high: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
+    menu.addstr(((menu.getmaxyx()[0]) - 1), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
     menu.refresh()
 
     return path
 
-def sterring(key, path, highlighted_item, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
+def sterring(key, menu, path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
 
     match key:
         case curses.KEY_UP:
@@ -148,23 +143,43 @@ def sterring(key, path, highlighted_item, current_page, items_pages, list_len, m
         case curses.KEY_DOWN:
             return 1 if highlighted_item < list_len else 0
         case curses.KEY_RIGHT:
-            return max_list_len if current_page < items_pages else 0
+            if current_page + 1 == items_pages:
+                return last_index - highlighted_item + 1
+            else:
+                return (max_list_len + 1 ) if current_page < items_pages else 0
         case curses.KEY_LEFT:
-            return max_list_len * (-1) if current_page > 1 else 0
+            return (max_list_len + 1 ) * (-1) if current_page > 1 else 0
+        case curses.KEY_BACKSPACE:
+            return change_dir(menu, "..", highlighted_item) if os.getcwd() != "/" else 0
         case 10: #10 is ASCII Code of Enter key
-            return (0 if "𝔽" in path else change_dir(path, highlighted_item))
+            return (0 if "𝔽" in path else change_dir(menu, path, highlighted_item))
         case _: #kind of "else" in match case statement
             return 0
 
-def change_page(key, current_page, items_pages, path):
+def check_highlight(highlighted_item, first_index, last_index) -> int: #function sets highlight in right place when user go to the end of page
+
+    if highlighted_item > last_index:
+        return last_index - highlighted_item
+    elif highlighted_item < first_index:
+        return first_index - highlighted_item
+    else:
+        return 0
+    
+def change_page(key, highlighted_item, current_page, items_pages, first_index, last_index, path) -> int: #function allows changing pages
 
     match key:
         case 10: #10 is ASCII Code of Enter key
-            return ((current_page * (-1)) + 1 if "𝔽" not in path else 0)
+            return ((current_page * (-1)) + 1) if "𝔽" not in path else 0
         case curses.KEY_RIGHT:
             return 1 if current_page < items_pages else 0
         case curses.KEY_LEFT:
             return (-1) if current_page > 1 else 0
+        case curses.KEY_DOWN:
+            return 1 if highlighted_item > last_index else 0
+        case curses.KEY_UP:
+            return (-1) if highlighted_item < first_index else 0
+        case curses.KEY_BACKSPACE:
+            return (current_page * (-1)) + 1
         case _: #kind of "else" in match case statement
             return 0
             
