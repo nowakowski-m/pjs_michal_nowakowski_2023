@@ -41,7 +41,7 @@ def screen_elements(): #initializing new windows and returns it
     return menu_shadow, menu, max_list_len
 
 def load_settings() -> list: #loading settings file and returns it values as lists
-    with open('/home/nowakowski-m/Programowanie/Semestr 2/PJS2023/settings.yaml') as f:
+    with open('settings.yaml') as f:
         config = yaml.safe_load(f)
 
     user_settings = [x for x in config["user_settings"].values()]
