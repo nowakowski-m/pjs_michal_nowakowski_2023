@@ -85,7 +85,7 @@ def list_items(show_hidden_items, items_pages, max_list_len) -> list: #checking 
     
     if (len(list_to_get) + items_pages) > max_list_len:
         for x in range(0, (len(list_to_get) + items_pages), (max_list_len + 1)):
-            items_list.insert(x, (f'°No higher dirs.' if os.getcwd() == "/" else f'° Go back.'))
+            items_list.insert(x, (f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back.'))
             
     return items_list
 
