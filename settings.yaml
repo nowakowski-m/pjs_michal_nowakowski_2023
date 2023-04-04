@@ -12,6 +12,7 @@ user_settings: {
 global_variables: {
   'highlighted_item': 0,
   'path': "",
+  'copy_path': "",
   'current_page': 1,
   'items_pages': 1
 }

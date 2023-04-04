@@ -38,10 +38,10 @@ def screen_elements(): #initializing new windows and returns it
     menu = curses.newwin(lines, cols, margin, (2 * margin))
     max_list_len = int(height) - (3 * margin) - 2
 
-    return menu_shadow, menu, max_list_len
+    return menu_shadow, menu, max_list_len, margin
 
-def load_settings() -> list: #loading settings file and returns it values as lists
-    with open('settings.yaml') as f:
+def load_settings() -> list: #loads settings file and returns it values as lists
+    with open('/home/nowakowski-m/Programowanie/Semestr 2/PJS2023/settings.yaml') as f:
         config = yaml.safe_load(f)
 
     user_settings = [x for x in config["user_settings"].values()]
@@ -102,7 +102,7 @@ def change_dir(menu, path, highlighted_item) -> int: #function changing director
 
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
+def render_things(menu, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
     menu.clear()
 
@@ -112,31 +112,55 @@ def render_things(menu, show_hidden_items, highlighted_item, max_list_len, items
 
             if "𝔻" in item:
                 path = item.split("𝔻")[1][1::]
+            elif "𝔽" in item:
+                path = item.split("𝔽")[1][1::]
             elif "°" in item:
                 path = ".."
-            else:
-                path = item
 
         else:
             curr_color = curses.color_pair(254)
 
         y_pos = index - ((max_list_len + 1) * (current_page - 1))
 
+        if len(item) > max_name_len:
+            new_item = item[::max_name_len] + "..."
+            # new_item = f'{(item[::(max_name_len - 3)])}...'
+
+            #not working
+        else:
+            new_item = item
+
         if index == first_index and (index <= last_index and index >= first_index - 0):
-            menu.addstr((y_pos + 1), 3, item, curr_color)
+            menu.addstr((y_pos + 1), 3, new_item, curr_color)
 
         elif index != first_index and (index <= last_index and index >= first_index + 0):
-            menu.addstr((y_pos + 1), 5, item, curr_color)
+            menu.addstr((y_pos + 1), 5, new_item, curr_color)
 
     # test strings 
     pages_string = f"Page: {current_page}/{items_pages}"
+    menu.addstr(((menu.getmaxyx()[0]) - 3), 0, f"{new_item}", curses.color_pair(4)) #just testing sth
     menu.addstr((menu.getmaxyx()[0] - 2), (menu.getmaxyx()[1] - len(pages_string) - 2), pages_string, curses.color_pair(4)) #just testing sth
-    menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"high: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
+    menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"len: {len(item)} max_len: {max_name_len}", curses.color_pair(4)) #just testing sth
     menu.addstr(((menu.getmaxyx()[0]) - 1), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
     menu.refresh()
 
     return path
 
+def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files using hotkeys
+    
+    new_path = ('/'.join(x.replace(' ', r'\ ') if ' ' in x else x for x in os.getcwd().split('/'))) + '/'
+    sudo = True if (os.geteuid() == 0) else False
+    
+    match key:
+        case 67: # Shift + C (copy)
+            return f'{new_path}{path}'
+        case 77: # Shift + M (move)
+            os.system(f'sudo mv {copy_path} {new_path}' if sudo else f'mv {copy_path} {new_path}')
+            return ""
+        case 86: # Shift + V (paste)
+            os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
+            return ""
+        
 def sterring(key, menu, path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
 
     match key:
@@ -153,7 +177,7 @@ def sterring(key, menu, path, highlighted_item, last_index, current_page, items_
             return (max_list_len + 1 ) * (-1) if current_page > 1 else 0
         case curses.KEY_BACKSPACE:
             return change_dir(menu, "..", highlighted_item) if os.getcwd() != "/" else 0
-        case 10: #10 is ASCII Code of Enter key
+        case 10: # Enter (submit)
             return (0 if "𝔽" in path else change_dir(menu, path, highlighted_item))
         case _: #kind of "else" in match case statement
             return 0
