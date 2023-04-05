@@ -15,7 +15,7 @@ To use the program, run file:&emsp;<b>file_manager.py</b>
 - [ ] (31.05.23) Creating usefull shortcuts for functions.
 - [ ] Ready to use! &ensp;:tada:
 
-## Documentation
+## User Manual
 
 https://nowakowski-m.gitbook.io/lahim/
 
