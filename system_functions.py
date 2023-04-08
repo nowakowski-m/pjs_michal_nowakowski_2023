@@ -4,7 +4,27 @@ import os       #for manipulating system status, controling and reading files/di
 
 ##### OPENING FUNCTIONS #####
 
-def start_things(stdscr, menu_shadow, menu): #just inits needed things for curses library usage in this app
+def screen_elements(): #initializing new windows and returns it
+    
+    margin, height, width, lines, cols = get_sizes()
+    menu_shadow = curses.newwin(lines, cols, (margin + 1), ((2 * margin) + 2))
+    menu = curses.newwin((lines - 3), cols, margin, (2 * margin))
+    lower_bar = curses.newwin(lines, cols, margin, (2 * margin))
+    max_list_len = menu.getmaxyx()[0] - 2
+
+    return menu_shadow, menu, lower_bar, max_list_len, margin
+
+def load_settings() -> list: #loads settings file and returns it values as lists
+    
+    with open('settings.yaml') as f:
+        config = yaml.safe_load(f)
+
+    user_settings = [x for x in config["user_settings"].values()]
+    global_variables = [y for y in config["global_variables"].values()]
+
+    return user_settings, global_variables
+
+def start_things(stdscr, menu_shadow, menu, lower_bar): #just inits needed things for curses library usage in this app
     
     curses.cbreak()
     curses.noecho()
@@ -31,27 +51,13 @@ def start_things(stdscr, menu_shadow, menu): #just inits needed things for curse
     menu.bkgd(curses.color_pair(3))
     menu.keypad(True)
     menu.refresh()
-
-def screen_elements(): #initializing new windows and returns it
-    margin, height, width, lines, cols = get_sizes()
-    menu_shadow = curses.newwin(lines, cols, (margin + 1), ((2 * margin) + 2))
-    menu = curses.newwin(lines, cols, margin, (2 * margin))
-    max_list_len = int(height) - (3 * margin) - 2
-
-    return menu_shadow, menu, max_list_len, margin
-
-def load_settings() -> list: #loads settings file and returns it values as lists
-    with open('/home/nowakowski-m/Programowanie/Semestr 2/PJS2023/settings.yaml') as f:
-        config = yaml.safe_load(f)
-
-    user_settings = [x for x in config["user_settings"].values()]
-    global_variables = [y for y in config["global_variables"].values()]
-
-    return user_settings, global_variables
+    lower_bar.bkgd(curses.color_pair(3))
+    lower_bar.refresh()
 
 ##### WINDOWS PARAMTERES #####
 
 def get_sizes() -> int: #function create usefull sizes for app, like windows sizes
+    
     margin = 4
     height, width = os.popen('stty size', 'r').read().split()
     lines = (int(height) - (2 * margin) - 1)
@@ -59,15 +65,17 @@ def get_sizes() -> int: #function create usefull sizes for app, like windows siz
 
     return margin, height, width, lines, cols
 
-
-def change_size(stdscr, menu_shadow, menu): #resizing windows, when terminal size changed
+def change_size(stdscr, menu_shadow, menu, lower_bar): #resizing windows, when terminal size changed
+    
     margin, height, width, lines, cols = get_sizes()
     stdscr.resize(int(height), int(width))
     menu_shadow.resize(lines, cols)
-    menu.resize(lines, cols)
+    menu.resize((lines - 3), cols)
+    lower_bar.resize(lines, cols)
     stdscr.refresh()
     menu_shadow.refresh()
     menu.refresh()
+    lower_bar.refresh()
 
 ##### FILES SUPPORT #####
 
@@ -91,18 +99,18 @@ def list_items(show_hidden_items, items_pages, max_list_len) -> list: #checking 
             
     return items_list
 
-def change_dir(menu, path, highlighted_item) -> int: #function changing directory and returning position
+def change_dir(lower_bar, path, highlighted_item) -> int: #function changing directory and returning position
+    
     try:
         os.chdir(path)
         return (0 - highlighted_item)
     except PermissionError:
-        menu.addstr((menu.getmaxyx()[0] - 2), 2, f'Permission error.', curses.color_pair(4)) #just testing sth
-        #can add kind of warning shown at screen to inform user of no access
+        lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
         return 0
 
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
+def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
     menu.clear()
 
@@ -130,18 +138,18 @@ def render_things(menu, max_name_len, show_hidden_items, highlighted_item, max_l
         else:
             new_item = item
 
-        if index == first_index and (index <= last_index and index >= first_index - 0):
+        if index == first_index and (index <= last_index and index >= first_index):
             menu.addstr((y_pos + 1), 3, new_item, curr_color)
 
-        elif index != first_index and (index <= last_index and index >= first_index + 0):
+        elif index != first_index and (index <= last_index and index >= first_index):
             menu.addstr((y_pos + 1), 5, new_item, curr_color)
 
-    # test strings 
     pages_string = f"Page: {current_page}/{items_pages}"
-    menu.addstr(((menu.getmaxyx()[0]) - 3), 0, f"{new_item}", curses.color_pair(4)) #just testing sth
-    menu.addstr((menu.getmaxyx()[0] - 2), (menu.getmaxyx()[1] - len(pages_string) - 2), pages_string, curses.color_pair(4)) #just testing sth
-    menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"len: {len(item)} max_len: {max_name_len}", curses.color_pair(4)) #just testing sth
-    menu.addstr(((menu.getmaxyx()[0]) - 1), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4)) #just testing sth
+    # lower_bar.addstr((lower_bar.getmaxyx()[0] - 2), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
+    # menu.addstr((menu.getmaxyx()[0] - 2), (menu.getmaxyx()[1] - len(pages_string) - 2), pages_string, curses.color_pair(4)) #just testing sth
+    # menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"len: {len(lista)} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
+    lower_bar.refresh()
     menu.refresh()
 
     return path
@@ -161,7 +169,9 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
             os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
             return ""
         
-def sterring(key, menu, path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
+def steering(key, lower_bar, path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
+
+    lower_bar.clear()
 
     match key:
         case curses.KEY_UP:
@@ -176,12 +186,12 @@ def sterring(key, menu, path, highlighted_item, last_index, current_page, items_
         case curses.KEY_LEFT:
             return (max_list_len + 1 ) * (-1) if current_page > 1 else 0
         case curses.KEY_BACKSPACE:
-            return change_dir(menu, "..", highlighted_item) if os.getcwd() != "/" else 0
+            return change_dir(lower_bar, "..", highlighted_item) if os.getcwd() != "/" else 0
         case 10: # Enter (submit)
-            return (0 if "𝔽" in path else change_dir(menu, path, highlighted_item))
+            return (0 if "𝔽" in path else change_dir(lower_bar, path, highlighted_item))
         case _: #kind of "else" in match case statement
             return 0
-
+        
 def check_highlight(highlighted_item, first_index, last_index) -> int: #function sets highlight in right place when user go to the end of page
 
     if highlighted_item > last_index:
