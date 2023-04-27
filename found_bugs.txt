@@ -1,4 +1,6 @@
-1. Need to add auto-change of max_list_len while chaning screen size.
+1. Need to add possibility to make window smaller.
+   Now app is crashing because can't add things at the screen, so
+   I should use try-except and calculate variables again.
     
 2. Terminal-size change provides resizing curses windows, but sometimes
    lagging and don't work really propertly. Maybe it will work better later.

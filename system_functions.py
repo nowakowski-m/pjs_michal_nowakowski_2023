@@ -114,6 +114,8 @@ def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_
 
     menu.clear()
 
+    list_len = len(list_items(show_hidden_items, items_pages, max_list_len))
+
     for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
         if index == highlighted_item:
             curr_color = curses.color_pair(255)
@@ -147,8 +149,8 @@ def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_
     pages_string = f"Page: {current_page}/{items_pages}"
     lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4)) #just testing sth
     # lower_bar.addstr((lower_bar.getmaxyx()[0] - 2), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
-    # menu.addstr((menu.getmaxyx()[0] - 2), (menu.getmaxyx()[1] - len(pages_string) - 2), pages_string, curses.color_pair(4)) #just testing sth
-    # menu.addstr(((menu.getmaxyx()[0]) - 2), 2, f"len: {len(lista)} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
+    # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 1), 2, f"hl: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
+    # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 3), 2, f"len: {list_len}", curses.color_pair(4)) #just testing sth
     lower_bar.refresh()
     menu.refresh()
 
@@ -168,8 +170,26 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
         case 86: # Shift + V (paste)
             os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
             return ""
-        
-def steering(key, lower_bar, path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len) -> int: #allows to control app using keyboard
+
+def delete_item(lower_bar, path, last_path, delete_warning):
+
+    if not delete_warning:
+        lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, f'Delete "{path}" ?', curses.color_pair(4))
+        return 0, True, path
+    
+    if delete_warning and last_path == path:
+        try:
+            os.rmdir(path) if os.path.isdir(path) else os.remove(path)
+        except PermissionError:
+            lower_bar.clear()
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
+            lower_bar.refresh()
+        except:
+            pass
+
+    return 0, False, ""
+
+def steering(key, lower_bar, path, last_path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len, delete_warning) -> int: #allows to control app using keyboard
 
     lower_bar.clear()
 
@@ -187,6 +207,8 @@ def steering(key, lower_bar, path, highlighted_item, last_index, current_page, i
             return (max_list_len + 1 ) * (-1) if current_page > 1 else 0
         case curses.KEY_BACKSPACE:
             return change_dir(lower_bar, "..", highlighted_item) if os.getcwd() != "/" else 0
+        case 68: # Shift + D
+            return delete_item(lower_bar, path, last_path, delete_warning)[0] if highlighted_item != (last_index - max_list_len) else 0
         case 10: # Enter (submit)
             return (0 if "𝔽" in path else change_dir(lower_bar, path, highlighted_item))
         case _: #kind of "else" in match case statement
@@ -207,7 +229,7 @@ def change_page(key, highlighted_item, current_page, items_pages, first_index, l
         case 10: #10 is ASCII Code of Enter key
             return ((current_page * (-1)) + 1) if "𝔽" not in path else 0
         case curses.KEY_RIGHT:
-            return 1 if current_page < items_pages else 0
+            return 1 if current_page < items_pages   else 0
         case curses.KEY_LEFT:
             return (-1) if current_page > 1 else 0
         case curses.KEY_DOWN:
