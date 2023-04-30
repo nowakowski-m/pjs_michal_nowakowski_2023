@@ -110,11 +110,9 @@ def change_dir(lower_bar, path, highlighted_item) -> int: #function changing dir
 
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
+def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
     menu.clear()
-
-    list_len = len(list_items(show_hidden_items, items_pages, max_list_len))
 
     for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
         if index == highlighted_item:
@@ -132,13 +130,7 @@ def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_
 
         y_pos = index - ((max_list_len + 1) * (current_page - 1))
 
-        if len(item) > max_name_len:
-            new_item = item[::max_name_len] + "..."
-            # new_item = f'{(item[::(max_name_len - 3)])}...'
-
-            #not working
-        else:
-            new_item = item
+        new_item = item[0:(max_name_len-3)] + "..." if len(item) > max_name_len else item
 
         if index == first_index and (index <= last_index and index >= first_index):
             menu.addstr((y_pos + 1), 3, new_item, curr_color)
@@ -151,10 +143,44 @@ def render_things(menu, lower_bar, max_name_len, show_hidden_items, highlighted_
     # lower_bar.addstr((lower_bar.getmaxyx()[0] - 2), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
     # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 1), 2, f"hl: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
     # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 3), 2, f"len: {list_len}", curses.color_pair(4)) #just testing sth
-    lower_bar.refresh()
-    menu.refresh()
 
-    return path
+    if preview_file:
+        try:
+            with open(path, "r") as f:
+                file_output = f.read()
+
+            menu.clear()
+            lines = file_output.split("\n")
+            for index, line in enumerate(lines):
+                start_index = preview_line
+                last_index = preview_line + max_list_len + 1
+                y_pos = index - start_index
+                line = line[0:(max_name_len)] + "..." if len(line) > max_name_len else line
+                if index >= start_index and index <= last_index:
+                    menu.addstr((y_pos + 1), 3, line, curses.color_pair(254))
+        except:
+            lines = []
+            pass
+
+        lower_bar.refresh()
+        menu.refresh()
+
+        return path if not preview_file else len(lines)
+
+def preview_steering(key, preview_file, preview_line, preview_len):
+    
+    if preview_file:
+        match key:
+            case curses.KEY_DOWN:
+                return 1, True if preview_line < preview_len else 0, True
+            case curses.KEY_UP:
+                return (-1), True if preview_line > 0 else 0, True
+            case 27:
+                return (preview_line * (-1)), False
+            case _:
+                return 0, True
+    else:
+        return 0, preview_file
 
 def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files using hotkeys
     
@@ -213,7 +239,7 @@ def steering(key, lower_bar, path, last_path, highlighted_item, last_index, curr
             return (0 if "𝔽" in path else change_dir(lower_bar, path, highlighted_item))
         case _: #kind of "else" in match case statement
             return 0
-        
+
 def check_highlight(highlighted_item, first_index, last_index) -> int: #function sets highlight in right place when user go to the end of page
 
     if highlighted_item > last_index:

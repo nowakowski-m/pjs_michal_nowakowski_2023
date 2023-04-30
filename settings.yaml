@@ -16,5 +16,6 @@ global_variables: {
   'copy_path': "",
   'current_page': 1,
   'items_pages': 1,
-  'delete_warning': False
+  'delete_warning': False,
+  'preview_file': False
 }
