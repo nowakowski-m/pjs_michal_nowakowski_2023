@@ -11,7 +11,7 @@ To use the program, run file:&emsp;<b>file_manager.py</b>
 ## Goals
 
 - [X] (31.03.23) Creating basic functionality.
-- [ ] (30.04.23) Adding more functions, and make GUI prettier.
+- [X] (30.04.23) Adding more functions, and make GUI prettier.
 - [ ] (31.05.23) Creating usefull shortcuts for functions.
 - [ ] Ready to use! &ensp;:tada:
 
