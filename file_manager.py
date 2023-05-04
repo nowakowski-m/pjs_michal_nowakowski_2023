@@ -33,7 +33,7 @@ while True:
     
     key = menu.getch()
     preview_opt = sf.preview_steering(key, preview_file, preview_line, preview_len, max_list_len)
-    preview_file = True if (key == 75 and not preview_file) else (preview_opt[1])
+    preview_file = True if (key == 80 and not preview_file) else (preview_opt[1])
     preview_len = render[1] if preview_file else 0
     preview_line += preview_opt[0]
 

@@ -165,7 +165,7 @@ def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, sho
             lower_bar.clear()
             lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(lines_string) - 2), f"{lines_string}", curses.color_pair(4))
             lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 2, f"Press ", curses.color_pair(4))
-            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 8, f"Shift + K", curses.color_pair(5) | curses.A_BOLD)
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 8, f"Shift + P", curses.color_pair(5) | curses.A_BOLD)
             lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 17, f" to close file preview.", curses.color_pair(4))
 
         except:
@@ -185,7 +185,7 @@ def preview_steering(key, preview_file, preview_line, preview_len, max_list_len)
                 return [3, True] if (preview_line + max_list_len + 1) < preview_len else [0, True]
             case curses.KEY_UP:
                 return [(-3), True] if preview_line > 0 else [0, True]
-            case 75:
+            case 80:
                 return [(preview_line * (-1)), False]
             case _:
                 return [0, True]
