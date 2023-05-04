@@ -6,5 +6,3 @@
    lagging and don't work really propertly. Maybe it will work better later.
 
 3. Need to add settings save.
-
-4. Need to repair auto exiting from preview file mode.

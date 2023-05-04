@@ -27,13 +27,15 @@ while True:
     last_index = first_index + max_list_len
     max_list_len = menu.getmaxyx()[0] - 2
 
-    path = sf.render_things(menu, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) if not preview_file else ""
+    render = sf.render_things(menu, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index)
+
+    path = render[0] if not preview_file else ""
     
     key = menu.getch()
-    preview_opt = sf.preview_steering(key, preview_file, preview_line, preview_len)
+    preview_opt = sf.preview_steering(key, preview_file, preview_line, preview_len, max_list_len)
     preview_file = True if (key == 75 and not preview_file) else (preview_opt[1])
-    preview_len = sf.render_things(menu, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) if preview_file else 0
-    preview_line = preview_opt[0]
+    preview_len = render[1] if preview_file else 0
+    preview_line += preview_opt[0]
 
     if not preview_file:
         highlighted_item += (sf.steering(key, lower_bar, path, last_path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len, delete_warning) if key else sf.check_highlight(highlighted_item, first_index, last_index))

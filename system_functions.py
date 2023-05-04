@@ -35,12 +35,14 @@ def start_things(stdscr, menu_shadow, menu, lower_bar): #just inits needed thing
     curses.init_color(2, 75, 976, 769) #cyan app shadow
     curses.init_color(3, 918, 75, 569) #pink app background
     curses.init_color(4, 0, 0, 0) #black hotkeys tips background
+    curses.init_color(5, 75, 976, 769) #cyan app shadow
     curses.init_color(254, 918, 75, 569) #pink bg for no item highlight
     curses.init_color(255, 75, 976, 769) #cyan item highlight
     curses.init_pair(1, curses.COLOR_BLACK, 1)
     curses.init_pair(2, curses.COLOR_BLACK, 2)
     curses.init_pair(3, curses.COLOR_BLACK, 3)
     curses.init_pair(4, curses.COLOR_WHITE, 4)
+    curses.init_pair(5, 5, 4)
     curses.init_pair(254, curses.COLOR_BLACK, 254)
     curses.init_pair(255, curses.COLOR_BLACK, 255)
 
@@ -133,13 +135,13 @@ def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, sho
         new_item = item[0:(max_name_len-3)] + "..." if len(item) > max_name_len else item
 
         if index == first_index and (index <= last_index and index >= first_index):
-            menu.addstr((y_pos + 1), 3, new_item, curr_color)
+            menu.addstr((y_pos + 1), 3, new_item, curr_color | curses.A_BOLD)
 
         elif index != first_index and (index <= last_index and index >= first_index):
             menu.addstr((y_pos + 1), 5, new_item, curr_color)
 
     pages_string = f"Page: {current_page}/{items_pages}"
-    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4)) #just testing sth
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4))
     # lower_bar.addstr((lower_bar.getmaxyx()[0] - 2), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
     # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 1), 2, f"hl: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
     # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 3), 2, f"len: {list_len}", curses.color_pair(4)) #just testing sth
@@ -153,34 +155,42 @@ def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, sho
             lines = file_output.split("\n")
             for index, line in enumerate(lines):
                 start_index = preview_line
-                last_index = preview_line + max_list_len + 1
+                last_index = preview_line + max_list_len
                 y_pos = index - start_index
                 line = line[0:(max_name_len)] + "..." if len(line) > max_name_len else line
-                if index >= start_index and index <= last_index:
+                if index >= start_index and index <= last_index :
                     menu.addstr((y_pos + 1), 3, line, curses.color_pair(254))
+            
+            lines_string = f"Line: {preview_line}/{len(lines)}"
+            lower_bar.clear()
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(lines_string) - 2), f"{lines_string}", curses.color_pair(4))
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 2, f"Press ", curses.color_pair(4))
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 8, f"Shift + K", curses.color_pair(5) | curses.A_BOLD)
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 17, f" to close file preview.", curses.color_pair(4))
+
         except:
             lines = []
             pass
 
-        lower_bar.refresh()
-        menu.refresh()
+    lower_bar.refresh()
+    menu.refresh()
 
-        return path if not preview_file else len(lines)
+    return (path, 0) if not preview_file else (path, len(lines))
 
-def preview_steering(key, preview_file, preview_line, preview_len):
+def preview_steering(key, preview_file, preview_line, preview_len, max_list_len):
     
     if preview_file:
         match key:
             case curses.KEY_DOWN:
-                return 1, True if preview_line < preview_len else 0, True
+                return [3, True] if (preview_line + max_list_len + 1) < preview_len else [0, True]
             case curses.KEY_UP:
-                return (-1), True if preview_line > 0 else 0, True
-            case 27:
-                return (preview_line * (-1)), False
+                return [(-3), True] if preview_line > 0 else [0, True]
+            case 75:
+                return [(preview_line * (-1)), False]
             case _:
-                return 0, True
+                return [0, True]
     else:
-        return 0, preview_file
+        return (0, preview_file)
 
 def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files using hotkeys
     
