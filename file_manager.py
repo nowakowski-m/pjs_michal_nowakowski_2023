@@ -3,6 +3,7 @@
 
 import system_functions as sf #temporary app module with whole functionality
 import curses #tool used for user interface
+import os #for system commands
 
 ############### Variables and configs section ###############
 use_cfg = sf.load_settings()
@@ -33,7 +34,7 @@ while True:
     
     key = menu.getch()
     preview_opt = sf.preview_steering(key, preview_file, preview_line, preview_len, max_list_len)
-    preview_file = True if (key == 80 and not preview_file) else (preview_opt[1])
+    preview_file = True if (key == 80 and not preview_file and not os.path.isdir(path) and sf.is_readable(path)) else (preview_opt[1])
     preview_len = render[1] if preview_file else 0
     preview_line += preview_opt[0]
 

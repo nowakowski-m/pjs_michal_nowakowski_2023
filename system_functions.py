@@ -177,6 +177,14 @@ def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, sho
 
     return (path, 0) if not preview_file else (path, len(lines))
 
+def is_readable(path):
+    try:
+        with open(path, 'r') as f:
+            f.read()
+            return True
+    except UnicodeDecodeError:
+        return False
+
 def preview_steering(key, preview_file, preview_line, preview_len, max_list_len):
     
     if preview_file:
@@ -246,7 +254,7 @@ def steering(key, lower_bar, path, last_path, highlighted_item, last_index, curr
         case 68: # Shift + D
             return delete_item(lower_bar, path, last_path, delete_warning)[0] if highlighted_item != (last_index - max_list_len) else 0
         case 10: # Enter (submit)
-            return (0 if "𝔽" in path else change_dir(lower_bar, path, highlighted_item))
+            return (0 if not os.path.isdir(path) else change_dir(lower_bar, path, highlighted_item))
         case _: #kind of "else" in match case statement
             return 0
 
@@ -263,7 +271,7 @@ def change_page(key, highlighted_item, current_page, items_pages, first_index, l
 
     match key:
         case 10: #10 is ASCII Code of Enter key
-            return ((current_page * (-1)) + 1) if "𝔽" not in path else 0
+            return ((current_page * (-1)) + 1) if os.path.isdir(path) else 0
         case curses.KEY_RIGHT:
             return 1 if current_page < items_pages   else 0
         case curses.KEY_LEFT:
