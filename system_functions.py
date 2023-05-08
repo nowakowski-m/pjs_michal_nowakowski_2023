@@ -1,6 +1,7 @@
 import curses   #for TUI, graphical terminal interface
 import yaml     #support for yaml settings file
 import os       #for manipulating system status, controling and reading files/dirs
+from shlex import quote #for well formated paths in copy-move-paste function
 
 ##### OPENING FUNCTIONS #####
 
@@ -16,7 +17,7 @@ def screen_elements(): #initializing new windows and returns it
 
 def load_settings() -> list: #loads settings file and returns it values as lists
     
-    with open('settings.yaml') as f:
+    with open('/home/nowakowski-m/Programowanie/Semestr 2/PJS2023/settings.yaml') as f:
         config = yaml.safe_load(f)
 
     user_settings = [x for x in config["user_settings"].values()]
@@ -112,9 +113,10 @@ def change_dir(lower_bar, path, highlighted_item) -> int: #function changing dir
 
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
+def render_things(menu, list_len, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
     menu.clear()
+    path = ""
 
     for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
         if index == highlighted_item:
@@ -178,11 +180,12 @@ def render_things(menu, preview_file, preview_line, lower_bar, max_name_len, sho
     return (path, 0) if not preview_file else (path, len(lines))
 
 def is_readable(path):
+
     try:
         with open(path, 'r') as f:
             f.read()
             return True
-    except UnicodeDecodeError:
+    except UnicodeError:
         return False
 
 def preview_steering(key, preview_file, preview_line, preview_len, max_list_len):
@@ -207,7 +210,7 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
     
     match key:
         case 67: # Shift + C (copy)
-            return f'{new_path}{path}'
+            return f'{new_path}"{path}"'
         case 77: # Shift + M (move)
             os.system(f'sudo mv {copy_path} {new_path}' if sudo else f'mv {copy_path} {new_path}')
             return ""
@@ -215,15 +218,18 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
             os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
             return ""
 
-def delete_item(lower_bar, path, last_path, delete_warning):
+def delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning):
+
+    highlight_change = 0
 
     if not delete_warning:
         lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, f'Delete "{path}" ?', curses.color_pair(4))
-        return 0, True, path
+        return highlight_change, True, path
     
     if delete_warning and last_path == path:
         try:
             os.rmdir(path) if os.path.isdir(path) else os.remove(path)
+            highlight_change = (-1) if highlighted_item == list_len else 0
         except PermissionError:
             lower_bar.clear()
             lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
@@ -231,7 +237,7 @@ def delete_item(lower_bar, path, last_path, delete_warning):
         except:
             pass
 
-    return 0, False, ""
+    return highlight_change, False, ""
 
 def steering(key, lower_bar, path, last_path, highlighted_item, last_index, current_page, items_pages, list_len, max_list_len, delete_warning) -> int: #allows to control app using keyboard
 
@@ -252,7 +258,7 @@ def steering(key, lower_bar, path, last_path, highlighted_item, last_index, curr
         case curses.KEY_BACKSPACE:
             return change_dir(lower_bar, "..", highlighted_item) if os.getcwd() != "/" else 0
         case 68: # Shift + D
-            return delete_item(lower_bar, path, last_path, delete_warning)[0] if highlighted_item != (last_index - max_list_len) else 0
+            return delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning)[0] if highlighted_item != (last_index - max_list_len) else 0
         case 10: # Enter (submit)
             return (0 if not os.path.isdir(path) else change_dir(lower_bar, path, highlighted_item))
         case _: #kind of "else" in match case statement
@@ -267,13 +273,13 @@ def check_highlight(highlighted_item, first_index, last_index) -> int: #function
     else:
         return 0
     
-def change_page(key, highlighted_item, current_page, items_pages, first_index, last_index, path) -> int: #function allows changing pages
+def change_page(key, highlighted_item, current_page, items_pages, list_len, first_index, last_index, delete_warning) -> int: #function allows changing pages
 
     match key:
         case 10: #10 is ASCII Code of Enter key
-            return ((current_page * (-1)) + 1) if os.path.isdir(path) else 0
+            return ((current_page * (-1)) + 1)
         case curses.KEY_RIGHT:
-            return 1 if current_page < items_pages   else 0
+            return 1 if current_page < items_pages else 0
         case curses.KEY_LEFT:
             return (-1) if current_page > 1 else 0
         case curses.KEY_DOWN:
@@ -283,7 +289,7 @@ def change_page(key, highlighted_item, current_page, items_pages, first_index, l
         case curses.KEY_BACKSPACE:
             return (current_page * (-1)) + 1
         case _: #kind of "else" in match case statement
-            return 0
+            return (-1) if items_pages > 1 and list_len == (first_index + 1) and delete_warning else 0
             
 ##### CLOSE FUNCTIONS #####
 

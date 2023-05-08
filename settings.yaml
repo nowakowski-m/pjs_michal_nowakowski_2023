@@ -17,5 +17,7 @@ global_variables: {
   'current_page': 1,
   'items_pages': 1,
   'delete_warning': False,
-  'preview_file': False
+  'preview_file': False,
+  'preview_len': 0,
+  'preview_line': 0
 }
