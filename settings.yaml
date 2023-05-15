@@ -12,6 +12,9 @@ user_settings: {
 global_variables: {
   'highlighted_item': 0,
   'path': "",
+  'key': 71,
+  'new_name': "",
+  'naming': [False, "nothing"],
   'last_path': "",
   'copy_path': "",
   'current_page': 1,

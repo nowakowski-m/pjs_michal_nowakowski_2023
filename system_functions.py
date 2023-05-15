@@ -1,7 +1,6 @@
 import curses   #for TUI, graphical terminal interface
 import yaml     #support for yaml settings file
 import os       #for manipulating system status, controling and reading files/dirs
-from shlex import quote #for well formated paths in copy-move-paste function
 
 ##### OPENING FUNCTIONS #####
 
@@ -9,15 +8,15 @@ def screen_elements(): #initializing new windows and returns it
     
     margin, height, width, lines, cols = get_sizes()
     menu_shadow = curses.newwin(lines, cols, (margin + 1), ((2 * margin) + 2))
-    menu = curses.newwin((lines - 3), cols, margin, (2 * margin))
+    menu = curses.newwin((lines - 2), cols, margin, (2 * margin))
     lower_bar = curses.newwin(lines, cols, margin, (2 * margin))
-    max_list_len = menu.getmaxyx()[0] - 2
+    max_list_len = menu.getmaxyx()[0] - 3
 
     return menu_shadow, menu, lower_bar, max_list_len, margin
 
 def load_settings() -> list: #loads settings file and returns it values as lists
     
-    with open('/home/nowakowski-m/Programowanie/Semestr 2/PJS2023/settings.yaml') as f:
+    with open('settings.yaml') as f:
         config = yaml.safe_load(f)
 
     user_settings = [x for x in config["user_settings"].values()]
@@ -48,14 +47,14 @@ def start_things(stdscr, menu_shadow, menu, lower_bar): #just inits needed thing
     curses.init_pair(255, curses.COLOR_BLACK, 255)
 
     stdscr.bkgd(curses.color_pair(1))
-    stdscr.refresh()
     menu_shadow.bkgd(curses.color_pair(2))
-    menu_shadow.refresh()
     menu.bkgd(curses.color_pair(3))
     menu.keypad(True)
-    menu.refresh()
     lower_bar.bkgd(curses.color_pair(3))
+    stdscr.refresh()
+    menu_shadow.refresh()
     lower_bar.refresh()
+    menu.refresh()
 
 ##### WINDOWS PARAMTERES #####
 
@@ -73,12 +72,12 @@ def change_size(stdscr, menu_shadow, menu, lower_bar): #resizing windows, when t
     margin, height, width, lines, cols = get_sizes()
     stdscr.resize(int(height), int(width))
     menu_shadow.resize(lines, cols)
-    menu.resize((lines - 3), cols)
+    menu.resize((lines - 2), cols)
     lower_bar.resize(lines, cols)
     stdscr.refresh()
     menu_shadow.refresh()
-    menu.refresh()
     lower_bar.refresh()
+    menu.refresh()
 
 ##### FILES SUPPORT #####
 
@@ -111,11 +110,20 @@ def change_dir(lower_bar, path, highlighted_item) -> int: #function changing dir
         lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
         return 0
 
+def is_readable(path) -> bool: #checks if python is able to decode file in preview
+
+    try:
+        with open(path, 'r') as f:
+            f.read()
+            return True
+    except UnicodeError:
+        return False
+
 ##### MENU AND IT'S STEERING #####
 
-def render_things(menu, list_len, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
+def render_things(menu, key, naming, new_name, list_len, preview_file, preview_line, lower_bar, max_name_len, show_hidden_items, highlighted_item, max_list_len, items_pages, current_page, first_index, last_index) -> str: #rendering current app status on screen
 
-    menu.clear()
+    operation_types = {"mkdir":"Create directory", "touch":"Create file", "rename":"Rename"}
     path = ""
 
     for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
@@ -144,9 +152,10 @@ def render_things(menu, list_len, preview_file, preview_line, lower_bar, max_nam
 
     pages_string = f"Page: {current_page}/{items_pages}"
     lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4))
-    # lower_bar.addstr((lower_bar.getmaxyx()[0] - 2), 2, f"first: {first_index} last: {last_index}", curses.color_pair(4)) #just testing sth
-    # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 1), 2, f"hl: {highlighted_item} max_len: {max_list_len}", curses.color_pair(4)) #just testing sth
-    # lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 3), 2, f"len: {list_len}", curses.color_pair(4)) #just testing sth
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 14), f"Hidden:  ", curses.color_pair(4))
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 6), f"🗹 " if show_hidden_items else f"☒ ", curses.color_pair(4))
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 2, f"Shift + S", curses.color_pair(5) | curses.A_BOLD)
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 11, f" Shortcuts", curses.color_pair(4))
 
     if preview_file:
         try:
@@ -174,19 +183,47 @@ def render_things(menu, list_len, preview_file, preview_line, lower_bar, max_nam
             lines = []
             pass
 
+    if naming[0]:
+        lower_bar.clear()
+        lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, f'{operation_types[naming[1]]}: {new_name}', curses.color_pair(4))
+        lower_bar.refresh()
+
     lower_bar.refresh()
     menu.refresh()
 
     return (path, 0) if not preview_file else (path, len(lines))
 
-def is_readable(path):
+def start_stop_naming(key, path, new_name, naming) -> list: #returns bool for showing input field and type of operation declared
 
-    try:
-        with open(path, 'r') as f:
-            f.read()
-            return True
-    except UnicodeError:
-        return False
+    if key == 10 and naming[0]:
+        os.system(f'{naming[1]} "{new_name}"' if naming[1] not in ["rename", "nothing"] else f'mv "{path}" "{new_name}"')
+        
+    match key:
+        case 68: #Shift + D
+            return [True, "mkdir"] if not naming[0] else [False, "nothing"]
+        case 70: #Shift + F
+            return [True, "touch"] if not naming[0] else [False, "nothing"]
+        case 82: #Shift + R
+            return [True, "rename"] if not naming[0] else [False, "nothing"]
+        case 10: #Enter Key
+            return [False, "nothing"]
+        case _:
+            return [naming[0], naming[1]]
+    
+def rename_and_make(key, new_name, naming) -> str: #returns current part of name
+    
+    if naming[0]:
+        if key not in [68, 70, 82]:
+            return f'{new_name[0:(len(new_name)-1)]}' if key == curses.KEY_BACKSPACE else f'{new_name}{chr(key)}'
+        else:
+            return f'{new_name}'
+    else:
+        return ""
+
+def hidden_options(key, show_hidden_items) -> bool: #function for changing option showing hidden files in dirs
+    
+    #72 is ASCII Code of Shift + H
+    return (False if show_hidden_items else True) if key == 72 else show_hidden_items
 
 def preview_steering(key, preview_file, preview_line, preview_len, max_list_len):
     
@@ -218,7 +255,7 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
             os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
             return ""
 
-def delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning):
+def delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning): #returns how highlight should be changed, bool for showing warning, and copy path of file you manage
 
     highlight_change = 0
 
@@ -257,7 +294,7 @@ def steering(key, lower_bar, path, last_path, highlighted_item, last_index, curr
             return (max_list_len + 1 ) * (-1) if current_page > 1 else 0
         case curses.KEY_BACKSPACE:
             return change_dir(lower_bar, "..", highlighted_item) if os.getcwd() != "/" else 0
-        case 68: # Shift + D
+        case 81: # Shift + Q
             return delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning)[0] if highlighted_item != (last_index - max_list_len) else 0
         case 10: # Enter (submit)
             return (0 if not os.path.isdir(path) else change_dir(lower_bar, path, highlighted_item))
@@ -272,12 +309,12 @@ def check_highlight(highlighted_item, first_index, last_index) -> int: #function
         return first_index - highlighted_item
     else:
         return 0
-    
-def change_page(key, highlighted_item, current_page, items_pages, list_len, first_index, last_index, delete_warning) -> int: #function allows changing pages
+
+def change_page(key, path, highlighted_item, current_page, items_pages, list_len, first_index, last_index, delete_warning, naming) -> int: #function allows changing pages
 
     match key:
         case 10: #10 is ASCII Code of Enter key
-            return ((current_page * (-1)) + 1)
+            return ((current_page * (-1)) + 1) if not os.path.isfile(path) else 0
         case curses.KEY_RIGHT:
             return 1 if current_page < items_pages else 0
         case curses.KEY_LEFT:
