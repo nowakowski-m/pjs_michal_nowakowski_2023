@@ -1,8 +1,14 @@
 import curses   #for TUI, graphical terminal interface
 import yaml     #support for yaml settings file
+import sys      #for adding title for terminal session
 import os       #for manipulating system status, controling and reading files/dirs
 
 ##### OPENING FUNCTIONS #####
+
+def set_terminal_title(title):
+    
+    sys.stdout.write(f"\033]0;{title}\a")
+    sys.stdout.flush()
 
 def screen_elements(): #initializing new windows and returns it
     

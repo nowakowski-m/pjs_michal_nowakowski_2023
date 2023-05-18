@@ -6,6 +6,7 @@ import curses #tool used for user interface
 import os #for system commands
 
 ############### Variables and configs section ###############
+sf.set_terminal_title("Lahim")
 use_cfg = sf.load_settings()
 stdscr = curses.initscr()
 app_path = os.getcwd()
