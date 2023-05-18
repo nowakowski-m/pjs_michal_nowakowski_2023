@@ -1,9 +1,9 @@
-# User's settings - can change them there, or will be
-# automatically saved when changed in app properties.
+# User's settings - can change there defaults, or
+# change them for a while using hotkeys.
 
 user_settings: {
-  'show_hidden_files': False,
-  'useless_things': 'test'
+  'show_hidden_files': False, # show files starts with "."
+  'show_hints': False         # starts app with hotkeys list
 }
 
 # Global variables needed for app properly working.

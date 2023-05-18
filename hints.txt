@@ -1,0 +1,21 @@
+╦    ╔═╗  ╦ ╦  ╦  ╔╦╗       ╦ ╦  ╦  ╔╗╔  ╔╦╗  ╔═╗
+║    ╠═╣  ╠═╣  ║  ║║║  ───  ╠═╣  ║  ║║║   ║   ╚═╗
+╩═╝  ╩ ╩  ╩ ╩  ╩  ╩ ╩       ╩ ╩  ╩  ╝╚╝   ╩   ╚═╝
+
+Arrows UP / DOWN, Mouse Scroll - Scrolling items on screen, or file preview.
+Arrows LEFT / RIGHT - Changing pages immediately.
+Backspace Key - Previous directory. (cd ..)
+Enter Key - Go to directory, submit inputs.
+Escape Key - Close app properly. (CTRL + C may cause terminal bugs)
+Shift + C - Copies path of highlighted item to use it later.
+Shift + M - Moves copied file to current path. (file no longer in primary path)
+Shift + V - Paste copied file to current path. (makes a duplicate in a new path)
+Shift + Q - Delete file or directory. (if dir is empty - for secure)
+Shift + H - Shows this hints screen. (or close it if it's opened)
+Shift + S - Toggles option for showing hidden files. (on / off)
+Shift + P - Opens preview of file content. (if it's possible to decode it)
+Shift + F - Creates empty file with name user type in input field.
+Shift + D - Creates directory with name user type in input field.
+Shift + R - Renames highlighted item with name user type in input field.
+
+@Michał Nowakowski - 2023

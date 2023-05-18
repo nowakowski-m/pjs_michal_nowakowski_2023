@@ -81,25 +81,33 @@ def change_size(stdscr, menu_shadow, menu, lower_bar): #resizing windows, when t
 
 ##### FILES SUPPORT #####
 
-def list_items(show_hidden_items, items_pages, max_list_len) -> list: #checking for items in current dir and prepares list for app needs
+def list_items(show_hidden_items, lower_bar, items_pages, max_list_len) -> list: #checking for items in current dir and prepares list for app needs
 
-    match show_hidden_items:
-        case True:
-            list_to_get = [f for f in os.listdir()]
-        case False:
-            list_to_get = [f for f in os.listdir() if not f.startswith('.')]
+    try:
+        match show_hidden_items:
+            case True:
+                list_to_get = [f for f in os.listdir()]
+            case False:
+                list_to_get = [f for f in os.listdir() if not f.startswith('.')]
 
-    higher_dirs = (len(os.getcwd().split("/"))) - 1
+        higher_dirs = (len(os.getcwd().split("/"))) - 1
 
-    items_list = [] if (len(list_to_get) + items_pages) > max_list_len else [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})']
+        items_list = [] if (len(list_to_get) + items_pages) > max_list_len else [f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})']
 
-    items_list.extend(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}' for name in list_to_get)
-    
-    if (len(list_to_get) + items_pages) > max_list_len:
-        for x in range(0, (len(list_to_get) + items_pages), (max_list_len + 1)):
-            items_list.insert(x, (f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})'))
-            
-    return items_list
+        items_list.extend(f'𝔻 {name}' if os.path.isdir(name) else f'𝔽 {name}' for name in list_to_get)
+        
+        if (len(list_to_get) + items_pages) > max_list_len:
+            for x in range(0, (len(list_to_get) + items_pages), (max_list_len + 1)):
+                items_list.insert(x, (f'° No higher dirs.' if os.getcwd() == "/" else f'° Go back. ({higher_dirs})'))
+                
+        return items_list
+
+    except PermissionError:
+        os.chdir("..")
+        lower_bar.clear()
+        lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
+        lower_bar.refresh()
+        return []
 
 def change_dir(lower_bar, path, highlighted_item) -> int: #function changing directory and returning position
     
@@ -126,7 +134,9 @@ def render_things(menu, key, naming, new_name, list_len, preview_file, preview_l
     operation_types = {"mkdir":"Create directory", "touch":"Create file", "rename":"Rename"}
     path = ""
 
-    for index, item in enumerate(list_items(show_hidden_items, items_pages, max_list_len)):
+    menu.clear()
+
+    for index, item in enumerate(list_items(show_hidden_items, lower_bar, items_pages, max_list_len)):
         if index == highlighted_item:
             curr_color = curses.color_pair(255)
 
@@ -154,8 +164,8 @@ def render_things(menu, key, naming, new_name, list_len, preview_file, preview_l
     lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 2), f"{pages_string}", curses.color_pair(4))
     lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 14), f"Hidden:  ", curses.color_pair(4))
     lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 6), f"🗹 " if show_hidden_items else f"☒ ", curses.color_pair(4))
-    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 2, f"Shift + S", curses.color_pair(5) | curses.A_BOLD)
-    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 11, f" Shortcuts", curses.color_pair(4))
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 24), f" Hotkeys", curses.color_pair(4))
+    lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), (lower_bar.getmaxyx()[1] - len(pages_string) - 33), f"Shift + H", curses.color_pair(5) | curses.A_BOLD)
 
     if preview_file:
         try:
@@ -197,7 +207,10 @@ def start_stop_naming(key, path, new_name, naming) -> list: #returns bool for sh
 
     if key == 10 and naming[0]:
         os.system(f'{naming[1]} "{new_name}"' if naming[1] not in ["rename", "nothing"] else f'mv "{path}" "{new_name}"')
-        
+        if os.path.isdir(path):
+            new_path = f'{os.getcwd()}'
+            os.chdir(new_path)
+            
     match key:
         case 68: #Shift + D
             return [True, "mkdir"] if not naming[0] else [False, "nothing"]
@@ -222,8 +235,8 @@ def rename_and_make(key, new_name, naming) -> str: #returns current part of name
 
 def hidden_options(key, show_hidden_items) -> bool: #function for changing option showing hidden files in dirs
     
-    #72 is ASCII Code of Shift + H
-    return (False if show_hidden_items else True) if key == 72 else show_hidden_items
+    #83 is ASCII Code of Shift + S
+    return (False if show_hidden_items else True) if key == 83 else show_hidden_items
 
 def preview_steering(key, preview_file, preview_line, preview_len, max_list_len):
     
@@ -271,8 +284,12 @@ def delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_w
             lower_bar.clear()
             lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "No permissions.", curses.color_pair(4))
             lower_bar.refresh()
-        except:
+        except FileNotFoundError:
             pass
+        except:
+            lower_bar.clear()
+            lower_bar.addstr(((lower_bar.getmaxyx()[0]) - 2), 3, "Can't delete.", curses.color_pair(4))
+            lower_bar.refresh()
 
     return highlight_change, False, ""
 
@@ -327,7 +344,34 @@ def change_page(key, path, highlighted_item, current_page, items_pages, list_len
             return (current_page * (-1)) + 1
         case _: #kind of "else" in match case statement
             return (-1) if items_pages > 1 and list_len == (first_index + 1) and delete_warning else 0
-            
+
+def hints_screen(menu, lower_bar, max_list_len, key, show_hints, app_path):
+
+    if show_hints:
+        with open(f'{app_path}/hints.txt', 'r') as h:
+            hints = h.read()
+
+        lower_bar.clear()
+        menu.clear()
+
+        for index, line in enumerate(hints.split("\n")):
+            if index <= max_list_len:
+                if index > 2:
+                    menu.addstr(index + 1, 4, line, curses.color_pair(254))
+                else:
+                    menu.addstr(index + 1, round((menu.getmaxyx()[1] - len(line)) / 2), line, curses.color_pair(254))
+        
+        lower_bar.refresh()
+        menu.refresh()
+
+    if key == 72:
+        if show_hints:
+            return False
+        else:
+            return True
+    else:
+        return show_hints
+
 ##### CLOSE FUNCTIONS #####
 
 def close_functions(menu): #functions needed to be executed to close app propertly
