@@ -271,7 +271,7 @@ def copy_paste_move(path, copy_path, key) -> str: #allows copy and move files us
             os.system(f'sudo mv {copy_path} {new_path}' if sudo else f'mv {copy_path} {new_path}')
             return ""
         case 86: # Shift + V (paste)
-            os.system(f'sudo cp {copy_path} {new_path}' if sudo else f'cp {copy_path} {new_path}')
+            os.system(f'sudo cp -r {copy_path} {new_path}' if sudo else f'cp -r {copy_path} {new_path}')
             return ""
 
 def delete_item(lower_bar, path, last_path, highlighted_item, list_len, delete_warning): #returns how highlight should be changed, bool for showing warning, and copy path of file you manage
