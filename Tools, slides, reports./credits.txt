@@ -1,0 +1,8 @@
+@ Michał Nowakowski - 2023
+
+LAHIM - Lightweight and highly intuitive manager.
+Project created for studies using Linux, Python and it's libraries.
+It's open source app, feel free to edit it and add some improvements.
+
+Documentation:
+https://nowakowski-m.gitbook.io/lahim/
