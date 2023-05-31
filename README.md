@@ -19,7 +19,10 @@ To use the program, run file:&emsp;<b>file_manager.py</b>
 
 https://nowakowski-m.gitbook.io/lahim/
 
-## Presentation
-http://bit.ly/3ydpNLR
+## Presentations
+### First:
+https://bit.ly/3WOLkWE
+### Final:
+https://bit.ly/42hfP8w
 
 @Michał Nowakowski - 2023
